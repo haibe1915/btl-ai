@@ -83,6 +83,7 @@ class makeMatrix:
         self.startq = list()
         self.end = None
         self.endq = list()
+        self.heap = []
         self.n = size[0]/5
         self.m = size[1]/5
         self.E = [[0 for i in range(0, size[1]//5)]
@@ -153,6 +154,7 @@ class makeMatrix:
                 self.matrix[x+t[i]][y+t[j]].draw(window)
         self.sets.put(self.start)
         self.set.add(self.start)
+        self.heap.append(self.start)
         self.stack.append(self.start)
         self.stack2.put(self.start)
         self.queue.put(self.start)
@@ -196,6 +198,7 @@ class makeMatrix:
                   for i in range(0, size[0]//5)]
         self.sets = queue.PriorityQueue()
         self.queue = queue.Queue()
+        self.heap = []
         self.stack = list()
         self.stack2 = queue.LifoQueue()
         self.endq=list()
@@ -389,16 +392,59 @@ class makeMatrix:
                 self.matrix[x][y].draw(window)
 
     def solve3(self, window):  # phần giải quyết vấn đề dijkstra
+        # if not self.start or not self.end:
+        #     return
+        # self.drawSE()
+        # global u, bf
+        # if self.isFind == False:
+        #     return
+        # if (self.sets.empty()):
+        #     bf = False
+        #     u = True
+        #     return
         if not self.start or not self.end:
             return
         self.drawSE()
         global u, bf
         if self.isFind == False:
             return
-        if (self.sets.empty()):
+        p1 = [0, 0, 1, -1]
+        p2 = [1, -1, 0, 0]
+        if (len(self.heap) == 0):
             bf = False
             u = True
             return
+        k = self.heap.pop(0)
+        self.matrix[k.x][k.y].change('check')
+        self.matrix[k.x][k.y].draw(window)
+        for i in range(4):
+            x = k.x+p1[i]
+            y = k.y+p2[i]
+            if x < 0 or x >= self.n:
+                continue
+            if y < 0 or y >= self.m:
+                continue
+            if self.E[x][y] == -1:
+                continue
+            temp = point(x, y, k)
+            temp.G = k.G + 1
+            temp.H = math.sqrt(pow(x-self.end.x, 2)+pow(y-self.end.y, 2))
+            self.E[x][y] = -1
+            self.heap.append(temp)
+            self.heap.sort(key=lambda element: element.G)
+            self.matrix[x][y].change('uncheck')
+            self.matrix[x][y].draw(window)
+            if temp.H == 0:
+                self.isFind = False
+                while temp is not None:
+                    self.matrix[temp.x][temp.y].change('road')
+                    self.matrix[temp.x][temp.y].draw(window)
+                    temp = temp.old
+                bf = False
+                u = True
+                self.matrix[self.start.x][self.start.y].draw(window)
+                self.matrix[x][y].change('dis')
+                self.matrix[x][y].draw(window)
 
 
 class RadioButton(pygame.sprite.Sprite):
@@ -657,6 +703,8 @@ while isRunning:
         algorithm = radioButtons[1].text
     elif radioButtons[2].clicked:
         algorithm = radioButtons[2].text
+    elif radioButtons[3].clicked:
+        algorithm = radioButtons[3].text
     if bf:
         if (u):
             global t
